@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -214,8 +215,15 @@ func TestResponsesCancellationAndBudget(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Drain the request so net/http can observe the client disconnect.
+			// Waiting on the context with an unread body can deadlock server.Close.
+			_, _ = io.Copy(io.Discard, r.Body)
 			cancel()
-			<-r.Context().Done()
+			select {
+			case <-r.Context().Done():
+			case <-time.After(5 * time.Second):
+				t.Error("server did not observe request cancellation")
+			}
 		}))
 		defer server.Close()
 		agent := responsesTestAgent(t, ctx, server.URL)

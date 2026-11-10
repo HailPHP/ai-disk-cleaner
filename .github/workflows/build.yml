@@ -36,8 +36,18 @@ jobs:
           if [[ -n "$unformatted" ]]; then
             echo "The following Go files are not formatted:"
             echo "$unformatted"
+            gofmt -w "${go_files[@]}"
+            git diff --binary > go-formatting.patch
             exit 1
           fi
+
+      - name: Upload Go formatting diff
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-formatting-diff
+          path: go-formatting.patch
+          if-no-files-found: ignore
 
   go-test:
     name: Go tests
@@ -91,6 +101,23 @@ jobs:
       - name: Build portable Windows executable
         run: wails build -platform windows/amd64 -trimpath -o ai-disk-cleaner-windows-amd64.exe
 
+      - name: Smoke test Windows startup
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path 'build/bin/ai-disk-cleaner-windows-amd64.exe').Path
+          $process = Start-Process -FilePath $exe -PassThru
+          try {
+            Start-Sleep -Seconds 8
+            $process.Refresh()
+            if ($process.HasExited) {
+              throw "Application exited during startup with code $($process.ExitCode)"
+            }
+            'Windows process remained running after startup; no disk scan or cleanup was started.' |
+              Set-Content 'build/bin/startup-smoke.txt' -Encoding utf8
+          } finally {
+            if (-not $process.HasExited) { Stop-Process -Id $process.Id }
+          }
+
       - name: Generate checksum
         shell: pwsh
         run: |
@@ -105,6 +132,7 @@ jobs:
           path: |
             build/bin/ai-disk-cleaner-windows-amd64.exe
             build/bin/ai-disk-cleaner-windows-amd64.exe.sha256
+            build/bin/startup-smoke.txt
             docs/responses-api.md
           if-no-files-found: error
 

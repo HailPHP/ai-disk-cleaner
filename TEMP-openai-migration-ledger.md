@@ -57,6 +57,6 @@ Privacy: local item history, store=false, no previous_response_id or conversatio
 
 The existing environment credential successfully accessed gpt-6-astra. A two-request synthetic Responses check forced analyze_directory, replayed all output items, supplied the matching call_id result, and received a completed text response. Usage: 193 + 222 = 415 tokens. No disk data was sent. This trivial prompt produced no reasoning item, so encrypted reasoning replay is covered by the mock test rather than claimed as live-verified. This Python protocol check does not substitute for compiling/testing the Go app.
 
-PR #1 has been created for CI validation. No GitHub Actions run was produced initially. The user has now confirmed enabling workflows in the fork; CI is being triggered again. Windows executable and full suite remain pending.
+PR #1 has been created for CI validation. No GitHub Actions run was produced initially. The user has now confirmed enabling workflows in the fork; Windows CI run 42746719907 started successfully. The first run identifies formatting changes for synchronization; full tests/build remain pending. A Windows process-startup smoke check has also been added to validate that the generated executable stays running without starting a scan.
 
 Local static checks: 78 Go/TypeScript/TSX source files parsed without syntax errors using Tree-sitter; translation JSON and workflow YAML parsed successfully; git diff --check passed. These checks do not establish type checking, test success or executable build success.

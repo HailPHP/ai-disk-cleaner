@@ -270,6 +270,8 @@ func TestSettingDefaultsAndSave(t *testing.T) {
 	}
 
 	updated := []setting.Setting{
+		{Key: "llm.api-mode", Value: "responses"},
+		{Key: "llm.request-timeout", Value: "300"},
 		{Key: "llm.secret", Value: "secret"},
 		{Key: "llm.url", Value: "https://example.com/v1"},
 		{Key: "llm.model", Value: "model"},
