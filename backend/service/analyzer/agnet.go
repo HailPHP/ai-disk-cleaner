@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 type agentContextState string
@@ -32,6 +33,9 @@ type Agent struct {
 	usedTokens  int64
 	totalTokens int64
 	messages    []openai.ChatCompletionMessageParamUnion
+	responsesInput []responses.ResponseInputItemUnionParam
+	systemPrompt string
+	contextRevision uint64
 	TrashFiles  []cleaningrecord.TrashFile
 	TopUsages   []cleaningrecord.DiskUsage
 	log         analysisLogger
@@ -60,6 +64,10 @@ func newAgent(
 		state:      agentContextStateLow,
 		usedTokens: 0,
 		log:        (*tasklog.Session)(nil),
+		systemPrompt: systemPrompt,
+		responsesInput: []responses.ResponseInputItemUnionParam{
+			responses.ResponseInputItemParamOfMessage(i18n.AnalyzerUserPrompt(language), responses.EasyInputMessageRoleUser),
+		},
 		messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(systemPrompt),
 			openai.UserMessage(i18n.AnalyzerUserPrompt(language)),
@@ -97,6 +105,13 @@ func shouldCompress(agent *Agent) bool {
 func (agent *Agent) afterCompletions() {}
 
 func (agent *Agent) run() (*cleaningrecord.AnalysisResult, error) {
+	if agent.config.apiMode == apiModeResponses {
+		return agent.runResponses()
+	}
+	return agent.runChatCompletions()
+}
+
+func (agent *Agent) runChatCompletions() (*cleaningrecord.AnalysisResult, error) {
 	client := newOpenAIClient(agent.config)
 
 	manager := newManager()
@@ -143,7 +158,7 @@ func (agent *Agent) run() (*cleaningrecord.AnalysisResult, error) {
 			return nil, err
 		}
 		if len(completion.Choices) == 0 {
-			return nil, &analysisError{cause: errors.New("LLM returned no choices: " + completion.RawJSON()), summary: "LLM 未返回 choices"}
+			return nil, &analysisError{cause: errors.New("LLM returned no choices"), summary: "LLM 未返回 choices"}
 		}
 
 		message := completion.Choices[0].Message
@@ -188,3 +203,4 @@ func (agent *Agent) run() (*cleaningrecord.AnalysisResult, error) {
 		TokenUsage: agent.usedTokens,
 	}, nil
 }
+

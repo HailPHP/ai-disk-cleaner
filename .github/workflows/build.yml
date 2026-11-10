@@ -1,6 +1,7 @@
 name: Build
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
@@ -69,7 +70,13 @@ jobs:
 
       - name: Run frontend checks
         working-directory: frontend
-        run: pnpm check && pnpm build
+        run: pnpm lint && pnpm check && pnpm build
+
+      - name: Format Go source
+        shell: pwsh
+        run: |
+          $files = git ls-files '*.go'
+          gofmt -w $files
 
       - name: Run Go tests
         env:
@@ -77,3 +84,43 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
         run: go test ./...
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+
+      - name: Build portable Windows executable
+        run: wails build -platform windows/amd64 -trimpath -o ai-disk-cleaner-windows-amd64.exe
+
+      - name: Generate checksum
+        shell: pwsh
+        run: |
+          $exe = 'build/bin/ai-disk-cleaner-windows-amd64.exe'
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  ai-disk-cleaner-windows-amd64.exe" | Set-Content "$exe.sha256" -Encoding ascii
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-disk-cleaner-windows-amd64
+          path: |
+            build/bin/ai-disk-cleaner-windows-amd64.exe
+            build/bin/ai-disk-cleaner-windows-amd64.exe.sha256
+            docs/responses-api.md
+          if-no-files-found: error
+
+      - name: Save formatting diff
+        if: always()
+        shell: pwsh
+        run: |
+          python -c "import subprocess; f=open('formatting.patch','wb'); subprocess.run(['git','diff','--binary'],stdout=f,check=True); f.close()"
+
+      - name: Upload formatting diff
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatting-diff
+          path: formatting.patch
+
+      - name: Require clean source after formatting
+        run: git diff --exit-code
+

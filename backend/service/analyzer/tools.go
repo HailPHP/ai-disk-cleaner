@@ -18,6 +18,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/responses"
 	"github.com/openai/openai-go/v3/shared"
 )
 
@@ -465,7 +466,12 @@ func resetAnalyzeContext(agent *Agent, summary string) {
 		agent.messages[0],
 		openai.UserMessage(userPrompt.String()),
 	}
+	agent.responsesInput = []responses.ResponseInputItemUnionParam{
+		responses.ResponseInputItemParamOfMessage(userPrompt.String(), responses.EasyInputMessageRoleUser),
+	}
+	agent.contextRevision++
 
 	agent.totalTokens = 0
 	agent.log.Event("上下文压缩", "状态=%s→%s 当前上下文Token=0 累计已知Token=%d", previous, agent.state, agent.usedTokens)
 }
+

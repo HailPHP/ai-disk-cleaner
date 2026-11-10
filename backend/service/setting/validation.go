@@ -16,6 +16,8 @@ type settingStore interface {
 }
 
 var supportedSettingKeys = map[string]struct{}{
+	"llm.api-mode": {},
+	"llm.request-timeout": {},
 	"llm.secret":                {},
 	"llm.url":                   {},
 	"llm.model":                 {},
@@ -26,10 +28,6 @@ var supportedSettingKeys = map[string]struct{}{
 }
 
 func validateSettings(settings []settingmodel.Setting) error {
-	if len(settings) != len(supportedSettingKeys) {
-		return fmt.Errorf("all %d settings must be provided", len(supportedSettingKeys))
-	}
-
 	seen := make(map[string]struct{}, len(settings))
 	for _, item := range settings {
 		if _, supported := supportedSettingKeys[item.Key]; !supported {
@@ -39,6 +37,15 @@ func validateSettings(settings []settingmodel.Setting) error {
 			return fmt.Errorf("duplicate setting key %q", item.Key)
 		}
 		seen[item.Key] = struct{}{}
+		if item.Key == "llm.api-mode" && item.Value != "chat_completions" && item.Value != "responses" {
+			return fmt.Errorf("llm.api-mode must be chat_completions or responses")
+		}
+		if item.Key == "llm.request-timeout" {
+			seconds, err := strconv.ParseInt(item.Value, 10, 64)
+			if err != nil || seconds < 1 || seconds > 3600 {
+				return fmt.Errorf("llm.request-timeout must be between 1 and 3600 seconds")
+			}
+		}
 		if item.Key == "llm.max-token" || item.Key == "record.max.count" {
 			value, err := strconv.ParseInt(item.Value, 10, 64)
 			if err != nil || value <= 0 {
@@ -61,5 +68,15 @@ func validateSettings(settings []settingmodel.Setting) error {
 			}
 		}
 	}
+	// New keys are optional for callers using the pre-migration settings contract.
+	for key := range supportedSettingKeys {
+		if key == "llm.api-mode" || key == "llm.request-timeout" {
+			continue
+		}
+		if _, ok := seen[key]; !ok {
+			return fmt.Errorf("missing setting key %q", key)
+		}
+	}
 	return nil
 }
+

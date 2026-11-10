@@ -103,3 +103,33 @@ func TestSaveRejectsInvalidExtraBody(t *testing.T) {
 		t.Fatal("invalid settings were persisted")
 	}
 }
+
+func TestSavePersistsAPIModeAndTimeout(t *testing.T) {
+	for _, mode := range []string{"chat_completions", "responses", "invalid"} {
+		t.Run(mode, func(t *testing.T) {
+			store := &fakeSettingStore{}
+			service := newService(context.Background(), store)
+			settings := []settingmodel.Setting{
+				{Key: "llm.secret", Value: "secret"},
+				{Key: "llm.url", Value: "https://example.com/v1"},
+				{Key: "llm.model", Value: "gpt-6-astra"},
+				{Key: "llm.max-token", Value: "50000"},
+				{Key: "llm.auto-context-compress", Value: "true"},
+				{Key: "llm.extra-body", Value: ""},
+				{Key: "record.max.count", Value: "10"},
+				{Key: "llm.api-mode", Value: mode},
+				{Key: "llm.request-timeout", Value: "300"},
+			}
+			err := service.Save(settings)
+			if mode == "invalid" {
+				if err == nil || len(store.saved) != 0 { t.Fatal("invalid mode persisted") }
+			} else if err != nil || len(store.saved) != 9 {
+				t.Fatalf("save error=%v, count=%d", err, len(store.saved))
+			}
+			settings[7].Value = "responses"
+			settings[8].Value = "0"
+			if err := service.Save(settings); err == nil { t.Fatal("invalid timeout accepted") }
+		})
+	}
+}
+

@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"ai-disk-cleanner/backend/service/tasklog"
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -21,6 +21,12 @@ type analysisLogger interface {
 }
 
 func completionErrorSummary(err error) string {
+	if errors.Is(err, context.Canceled) {
+		return "LLM 请求已取消"
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return "LLM 请求超时"
+	}
 	var apiError *openai.Error
 	if errors.As(err, &apiError) {
 		return fmt.Sprintf("LLM 请求失败 HTTP状态=%d", apiError.StatusCode)
@@ -29,7 +35,7 @@ func completionErrorSummary(err error) string {
 	if errors.As(err, &responseError) {
 		return fmt.Sprintf("LLM 响应格式异常 HTTP状态=%d", responseError.status)
 	}
-	return "LLM 请求失败：" + tasklog.ErrorSummary(err)
+	return "LLM 请求失败，请检查网络、API 模式和服务配置"
 }
 
 func (agent *Agent) logCompletion(turn int, elapsed time.Duration, completion *openai.ChatCompletion) {
@@ -48,3 +54,4 @@ func (agent *Agent) logCompletion(turn int, elapsed time.Duration, completion *o
 	}
 	agent.log.Round(turn, elapsed, input, output, total, "")
 }
+
