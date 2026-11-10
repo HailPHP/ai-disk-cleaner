@@ -54,4 +54,3 @@ func (agent *Agent) logCompletion(turn int, elapsed time.Duration, completion *o
 	}
 	agent.log.Round(turn, elapsed, input, output, total, "")
 }
-

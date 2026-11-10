@@ -34,7 +34,7 @@ type llmConfig struct {
 
 const (
 	apiModeChatCompletions = "chat_completions"
-	apiModeResponses = "responses"
+	apiModeResponses       = "responses"
 )
 
 func (analyzer *Service) loadLLMConfig(ctx context.Context) (*llmConfig, error) {
@@ -56,11 +56,11 @@ func parseLLMConfig(settings []setting.Setting) (*llmConfig, error) {
 	}
 
 	config := llmConfig{
-		apiMode: strings.TrimSpace(values["llm.api-mode"]),
+		apiMode:        strings.TrimSpace(values["llm.api-mode"]),
 		requestTimeout: 120 * time.Second,
-		secret:  strings.TrimSpace(values["llm.secret"]),
-		baseURL: strings.TrimSpace(values["llm.url"]),
-		model:   strings.TrimSpace(values["llm.model"]),
+		secret:         strings.TrimSpace(values["llm.secret"]),
+		baseURL:        strings.TrimSpace(values["llm.url"]),
+		model:          strings.TrimSpace(values["llm.model"]),
 	}
 	if config.apiMode == "" {
 		config.apiMode = apiModeChatCompletions
@@ -159,4 +159,3 @@ func newOpenAIClient(config *llmConfig) openai.Client {
 		option.WithHTTPClient(client),
 	)
 }
-

@@ -124,6 +124,7 @@ jobs:
           $exe = 'build/bin/ai-disk-cleaner-windows-amd64.exe'
           $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
           "$hash  ai-disk-cleaner-windows-amd64.exe" | Set-Content "$exe.sha256" -Encoding ascii
+          Copy-Item 'docs/responses-api.md' 'build/bin/README-Responses.md'
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
@@ -133,7 +134,7 @@ jobs:
             build/bin/ai-disk-cleaner-windows-amd64.exe
             build/bin/ai-disk-cleaner-windows-amd64.exe.sha256
             build/bin/startup-smoke.txt
-            docs/responses-api.md
+            build/bin/README-Responses.md
           if-no-files-found: error
 
       - name: Save formatting diff

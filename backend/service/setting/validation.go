@@ -16,8 +16,8 @@ type settingStore interface {
 }
 
 var supportedSettingKeys = map[string]struct{}{
-	"llm.api-mode": {},
-	"llm.request-timeout": {},
+	"llm.api-mode":              {},
+	"llm.request-timeout":       {},
 	"llm.secret":                {},
 	"llm.url":                   {},
 	"llm.model":                 {},
@@ -79,4 +79,3 @@ func validateSettings(settings []settingmodel.Setting) error {
 	}
 	return nil
 }
-

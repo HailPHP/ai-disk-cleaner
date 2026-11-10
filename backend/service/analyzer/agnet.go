@@ -24,21 +24,21 @@ const (
 )
 
 type Agent struct {
-	ctx         context.Context
-	tree        *modelscanner.FileTree
-	onDelta     func(string)
-	config      *llmConfig
-	language    string
-	state       agentContextState
-	usedTokens  int64
-	totalTokens int64
-	messages    []openai.ChatCompletionMessageParamUnion
-	responsesInput []responses.ResponseInputItemUnionParam
-	systemPrompt string
+	ctx             context.Context
+	tree            *modelscanner.FileTree
+	onDelta         func(string)
+	config          *llmConfig
+	language        string
+	state           agentContextState
+	usedTokens      int64
+	totalTokens     int64
+	messages        []openai.ChatCompletionMessageParamUnion
+	responsesInput  []responses.ResponseInputItemUnionParam
+	systemPrompt    string
 	contextRevision uint64
-	TrashFiles  []cleaningrecord.TrashFile
-	TopUsages   []cleaningrecord.DiskUsage
-	log         analysisLogger
+	TrashFiles      []cleaningrecord.TrashFile
+	TopUsages       []cleaningrecord.DiskUsage
+	log             analysisLogger
 }
 
 func newAgent(
@@ -56,14 +56,14 @@ func newAgent(
 		return nil, errors.New("analyze disk: file tree is nil")
 	}
 	return &Agent{
-		ctx:        ctx,
-		tree:       tree,
-		onDelta:    onDelta,
-		config:     config,
-		language:   language,
-		state:      agentContextStateLow,
-		usedTokens: 0,
-		log:        (*tasklog.Session)(nil),
+		ctx:          ctx,
+		tree:         tree,
+		onDelta:      onDelta,
+		config:       config,
+		language:     language,
+		state:        agentContextStateLow,
+		usedTokens:   0,
+		log:          (*tasklog.Session)(nil),
 		systemPrompt: systemPrompt,
 		responsesInput: []responses.ResponseInputItemUnionParam{
 			responses.ResponseInputItemParamOfMessage(i18n.AnalyzerUserPrompt(language), responses.EasyInputMessageRoleUser),
@@ -203,4 +203,3 @@ func (agent *Agent) runChatCompletions() (*cleaningrecord.AnalysisResult, error)
 		TokenUsage: agent.usedTokens,
 	}, nil
 }
-

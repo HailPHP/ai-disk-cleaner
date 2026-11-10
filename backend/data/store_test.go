@@ -361,4 +361,3 @@ func TestDeleteOldCleaningRecordsKeepsNewestByStartTime(t *testing.T) {
 		t.Fatalf("remaining record IDs = %#v, want 2 and 4", remaining)
 	}
 }
-

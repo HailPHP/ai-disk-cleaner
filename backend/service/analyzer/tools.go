@@ -474,4 +474,3 @@ func resetAnalyzeContext(agent *Agent, summary string) {
 	agent.totalTokens = 0
 	agent.log.Event("上下文压缩", "状态=%s→%s 当前上下文Token=0 累计已知Token=%d", previous, agent.state, agent.usedTokens)
 }
-

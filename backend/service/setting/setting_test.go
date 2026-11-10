@@ -122,14 +122,17 @@ func TestSavePersistsAPIModeAndTimeout(t *testing.T) {
 			}
 			err := service.Save(settings)
 			if mode == "invalid" {
-				if err == nil || len(store.saved) != 0 { t.Fatal("invalid mode persisted") }
+				if err == nil || len(store.saved) != 0 {
+					t.Fatal("invalid mode persisted")
+				}
 			} else if err != nil || len(store.saved) != 9 {
 				t.Fatalf("save error=%v, count=%d", err, len(store.saved))
 			}
 			settings[7].Value = "responses"
 			settings[8].Value = "0"
-			if err := service.Save(settings); err == nil { t.Fatal("invalid timeout accepted") }
+			if err := service.Save(settings); err == nil {
+				t.Fatal("invalid timeout accepted")
+			}
 		})
 	}
 }
-

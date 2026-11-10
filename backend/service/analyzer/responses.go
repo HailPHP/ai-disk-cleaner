@@ -44,13 +44,13 @@ func validateResponsesExtraBody(extra map[string]any) error {
 
 func newResponsesParams(config *llmConfig, instructions string, input []responses.ResponseInputItemUnionParam) responses.ResponseNewParams {
 	params := responses.ResponseNewParams{
-		Model: config.model,
-		Instructions: openai.String(instructions),
-		Input: responses.ResponseNewParamsInputUnion{OfInputItemList: input},
-		MaxOutputTokens: openai.Int(8000),
-		Store: openai.Bool(false),
+		Model:             config.model,
+		Instructions:      openai.String(instructions),
+		Input:             responses.ResponseNewParamsInputUnion{OfInputItemList: input},
+		MaxOutputTokens:   openai.Int(8000),
+		Store:             openai.Bool(false),
 		ParallelToolCalls: openai.Bool(false),
-		Include: []responses.ResponseIncludable{"reasoning.encrypted_content"},
+		Include:           []responses.ResponseIncludable{"reasoning.encrypted_content"},
 	}
 	extra := make(map[string]any, len(config.extraBody)+2)
 	for key, value := range config.extraBody {
@@ -61,7 +61,7 @@ func newResponsesParams(config *llmConfig, instructions string, input []response
 	if config.model == "gpt-6-astra" || strings.HasPrefix(config.model, "gpt-6-astra-") {
 		for key, defaults := range map[string]map[string]any{
 			"reasoning": {"effort": "low"},
-			"text": {"verbosity": "medium"},
+			"text":      {"verbosity": "medium"},
 		} {
 			if existing, ok := extra[key].(map[string]any); ok {
 				for field, value := range existing {
@@ -97,10 +97,10 @@ func buildResponsesTools(manager *toolsManager, agent *Agent) []responses.ToolUn
 	for _, tool := range manager.tools {
 		if tool.IsSupport(agent) {
 			result = append(result, responses.ToolUnionParam{OfFunction: &responses.FunctionToolParam{
-				Name: tool.Name(),
+				Name:        tool.Name(),
 				Description: openai.String(tool.Description()),
-				Parameters: tool.ParameterSchema(),
-				Strict: openai.Bool(true),
+				Parameters:  tool.ParameterSchema(),
+				Strict:      openai.Bool(true),
 			}})
 		}
 	}
@@ -228,8 +228,8 @@ func (agent *Agent) runResponses() (*cleaningrecord.AnalysisResult, error) {
 	}
 	return &cleaningrecord.AnalysisResult{
 		TrashFiles: agent.TrashFiles,
-		TopUsages: agent.TopUsages,
-		LLMOutput: output.String(),
+		TopUsages:  agent.TopUsages,
+		LLMOutput:  output.String(),
 		TokenUsage: agent.usedTokens,
 	}, nil
 }

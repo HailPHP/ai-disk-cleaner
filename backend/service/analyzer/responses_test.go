@@ -94,7 +94,9 @@ func TestResponsesAgentReplaysItemsAndExecutesOriginalTools(t *testing.T) {
 		switch requests {
 		case 1:
 			tools := body["tools"].([]any)
-			if len(tools) != 4 { t.Errorf("tools = %d", len(tools)) }
+			if len(tools) != 4 {
+				t.Errorf("tools = %d", len(tools))
+			}
 			for _, raw := range tools {
 				tool := raw.(map[string]any)
 				if tool["type"] != "function" || tool["strict"] != true || tool["parameters"] == nil || tool["function"] != nil {
@@ -114,7 +116,9 @@ func TestResponsesAgentReplaysItemsAndExecutesOriginalTools(t *testing.T) {
 		case 3:
 			for i, id := range []string{"call_trash", "call_usage"} {
 				result := input[len(input)-2+i].(map[string]any)
-				if result["call_id"] != id || result["output"] != "true" { t.Errorf("result=%v", result) }
+				if result["call_id"] != id || result["output"] != "true" {
+					t.Errorf("result=%v", result)
+				}
 			}
 			writeResponse(t, w, responseCall("call_compress", "compress_context", `{"summary":"Scanned /; do not rescan. Remaining: none."}`))
 		case 4:
@@ -135,18 +139,26 @@ func TestResponsesAgentReplaysItemsAndExecutesOriginalTools(t *testing.T) {
 	var visible strings.Builder
 	agent.onDelta = func(text string) { visible.WriteString(text) }
 	result, err := agent.run()
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	if requests != 4 || result.TokenUsage != 48 || result.LLMOutput != "Analyzing. Done." || visible.String() != result.LLMOutput {
 		t.Fatalf("requests=%d result=%+v", requests, result)
 	}
 	if len(result.TrashFiles) != 1 || result.TrashFiles[0].Path != "/cache" || len(result.TopUsages) != 1 || result.TopUsages[0].Size != 42 {
 		t.Fatalf("tools did not update analysis results: %+v", result)
 	}
-	if len(recorder.rounds) != 4 || len(recorder.tools) != 4 || agent.contextRevision != 1 { t.Fatalf("log=%+v", recorder) }
-	for _, round := range recorder.rounds {
-		if round.input == nil || *round.input != 10 || round.output == nil || *round.output != 2 || round.total == nil || *round.total != 12 { t.Errorf("usage=%+v", round) }
+	if len(recorder.rounds) != 4 || len(recorder.tools) != 4 || agent.contextRevision != 1 {
+		t.Fatalf("log=%+v", recorder)
 	}
-	if strings.Contains(fmt.Sprint(recorder), "PRIVATE_") { t.Fatal("private response/credential in logs") }
+	for _, round := range recorder.rounds {
+		if round.input == nil || *round.input != 10 || round.output == nil || *round.output != 2 || round.total == nil || *round.total != 12 {
+			t.Errorf("usage=%+v", round)
+		}
+	}
+	if strings.Contains(fmt.Sprint(recorder), "PRIVATE_") {
+		t.Fatal("private response/credential in logs")
+	}
 }
 
 func TestResponsesCompressionFailurePreservesCallResultPairs(t *testing.T) {
@@ -168,21 +180,32 @@ func TestResponsesCompressionFailurePreservesCallResultPairs(t *testing.T) {
 				found := false
 				for _, raw := range input {
 					item := raw.(map[string]any)
-					if item["type"] == "function_call_output" && item["call_id"] == "compress" && item["output"] != "Ok" { found = true }
+					if item["type"] == "function_call_output" && item["call_id"] == "compress" && item["output"] != "Ok" {
+						found = true
+					}
 				}
-				if !found { t.Error("failed compression left an orphan call") }
+				if !found {
+					t.Error("failed compression left an orphan call")
+				}
 				writeResponse(t, w, responseMessage("done"))
 			}))
 			defer server.Close()
 			agent := responsesTestAgent(t, context.Background(), server.URL)
-			if _, err := agent.run(); err != nil { t.Fatal(err) }
-			if agent.contextRevision != 0 { t.Fatal("failed compression reset history") }
+			if _, err := agent.run(); err != nil {
+				t.Fatal(err)
+			}
+			if agent.contextRevision != 0 {
+				t.Fatal("failed compression reset history")
+			}
 		})
 	}
 }
 
 func TestResponsesRejectsIncompleteMalformedAndUnsafeOutputs(t *testing.T) {
-	for _, test := range []struct { name, body string; status int }{
+	for _, test := range []struct {
+		name, body string
+		status     int
+	}{
 		{"http_error", `{"error":{"message":"PRIVATE_KEY PRIVATE_BODY"}}`, 400},
 		{"failed", `{"status":"failed","error":{"message":"PRIVATE_BODY"}}`, 200},
 		{"incomplete", `{"status":"incomplete","output":[{"type":"function_call","name":"add_top_usages","call_id":"one","arguments":"{\"usages\":[]}"}]}`, 200},
@@ -203,9 +226,15 @@ func TestResponsesRejectsIncompleteMalformedAndUnsafeOutputs(t *testing.T) {
 			recorder := &logRecorder{}
 			agent.log = recorder
 			_, err := agent.run()
-			if err == nil { t.Fatal("expected failure") }
-			if strings.Contains(err.Error(), "PRIVATE_") || strings.Contains(fmt.Sprint(recorder), "PRIVATE_") { t.Fatal("sensitive failure exposed") }
-			if len(recorder.tools) != 0 { t.Fatal("invalid response invoked tools") }
+			if err == nil {
+				t.Fatal("expected failure")
+			}
+			if strings.Contains(err.Error(), "PRIVATE_") || strings.Contains(fmt.Sprint(recorder), "PRIVATE_") {
+				t.Fatal("sensitive failure exposed")
+			}
+			if len(recorder.tools) != 0 {
+				t.Fatal("invalid response invoked tools")
+			}
 		})
 	}
 }
@@ -228,7 +257,9 @@ func TestResponsesCancellationAndBudget(t *testing.T) {
 		defer server.Close()
 		agent := responsesTestAgent(t, ctx, server.URL)
 		_, err := agent.run()
-		if !errors.Is(err, context.Canceled) { t.Fatalf("error=%v", err) }
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("error=%v", err)
+		}
 	})
 	t.Run("budget", func(t *testing.T) {
 		requests := 0
@@ -239,12 +270,14 @@ func TestResponsesCancellationAndBudget(t *testing.T) {
 		defer server.Close()
 		agent := responsesTestAgent(t, context.Background(), server.URL)
 		agent.config.maxTokens = 12
-		if _, err := agent.run(); err == nil || requests != 1 { t.Fatalf("requests=%d error=%v", requests, err) }
+		if _, err := agent.run(); err == nil || requests != 1 {
+			t.Fatalf("requests=%d error=%v", requests, err)
+		}
 	})
 }
 
 func testLLMSettings(url, mode string) []setting.Setting {
-	return []setting.Setting{{Key:"llm.secret", Value:"PRIVATE_KEY"}, {Key:"llm.url", Value:url}, {Key:"llm.model", Value:"gpt-6-astra"}, {Key:"llm.max-token", Value:"10000"}, {Key:"llm.api-mode", Value:mode}}
+	return []setting.Setting{{Key: "llm.secret", Value: "PRIVATE_KEY"}, {Key: "llm.url", Value: url}, {Key: "llm.model", Value: "gpt-6-astra"}, {Key: "llm.max-token", Value: "10000"}, {Key: "llm.api-mode", Value: mode}}
 }
 
 func TestConnectionUsesSelectedAPI(t *testing.T) {
@@ -253,49 +286,72 @@ func TestConnectionUsesSelectedAPI(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if mode == apiModeResponses {
 					body := readResponseRequest(t, r)
-					if body["tools"] != nil || body["max_output_tokens"] != float64(1024) { t.Error("incorrect connection probe") }
+					if body["tools"] != nil || body["max_output_tokens"] != float64(1024) {
+						t.Error("incorrect connection probe")
+					}
 					writeResponse(t, w, responseMessage("ok"))
 				} else {
-					if r.URL.Path != "/v1/chat/completions" { t.Error(r.URL.Path) }
+					if r.URL.Path != "/v1/chat/completions" {
+						t.Error(r.URL.Path)
+					}
 					w.Header().Set("Content-Type", "application/json")
 					fmt.Fprint(w, `{"choices":[{"message":{"role":"assistant","content":"ok"}}]}`)
 				}
 			}))
 			defer server.Close()
 			result, err := newService(nil).TestConnection(context.Background(), testLLMSettings(server.URL+"/v1", mode))
-			if err != nil || result.Type != "success" { t.Fatalf("result=%+v error=%v", result, err) }
+			if err != nil || result.Type != "success" {
+				t.Fatalf("result=%+v error=%v", result, err)
+			}
 		})
 	}
 }
 
 func TestConfigDefaultsAndResponsesGuards(t *testing.T) {
 	config, err := parseLLMConfig(testLLMSettings("https://example.com/v1", ""))
-	if err != nil || config.apiMode != apiModeChatCompletions || config.requestTimeout != 120*time.Second { t.Fatalf("config=%+v error=%v", config, err) }
-	for _, body := range []string{`{"store":true}`, `{"parallel_tool_calls":true}`, `{"stream":true}`, `{"input":[]}`, `{"tools":[]}`, `{"previous_response_id":"old"}`, `{"reasoning_effort":"low"}`, `{"verbosity":"medium"}`, `{"include":123}`} {
-		settings := append(testLLMSettings("https://example.com/v1", apiModeResponses), setting.Setting{Key:"llm.extra-body", Value:body})
-		if _, err := parseLLMConfig(settings); err == nil { t.Errorf("accepted unsafe/incompatible extra body: %s", body) }
+	if err != nil || config.apiMode != apiModeChatCompletions || config.requestTimeout != 120*time.Second {
+		t.Fatalf("config=%+v error=%v", config, err)
 	}
-	settings := append(testLLMSettings("https://example.com/v1", apiModeResponses), setting.Setting{Key:"llm.request-timeout",Value:"300"}, setting.Setting{Key:"llm.extra-body", Value:`{"reasoning":{"effort":"high"},"text":{"verbosity":"low"},"parallel_tool_calls":false}`})
+	for _, body := range []string{`{"store":true}`, `{"parallel_tool_calls":true}`, `{"stream":true}`, `{"input":[]}`, `{"tools":[]}`, `{"previous_response_id":"old"}`, `{"reasoning_effort":"low"}`, `{"verbosity":"medium"}`, `{"include":123}`} {
+		settings := append(testLLMSettings("https://example.com/v1", apiModeResponses), setting.Setting{Key: "llm.extra-body", Value: body})
+		if _, err := parseLLMConfig(settings); err == nil {
+			t.Errorf("accepted unsafe/incompatible extra body: %s", body)
+		}
+	}
+	settings := append(testLLMSettings("https://example.com/v1", apiModeResponses), setting.Setting{Key: "llm.request-timeout", Value: "300"}, setting.Setting{Key: "llm.extra-body", Value: `{"reasoning":{"effort":"high"},"text":{"verbosity":"low"},"parallel_tool_calls":false}`})
 	config, err = parseLLMConfig(settings)
-	if err != nil || config.requestTimeout != 300*time.Second { t.Fatalf("error=%v", err) }
+	if err != nil || config.requestTimeout != 300*time.Second {
+		t.Fatalf("error=%v", err)
+	}
 	encoded, err := json.Marshal(newResponsesParams(config, "system", nil))
-	if err != nil { t.Fatal(err) }
-	if !strings.Contains(string(encoded), `"effort":"high"`) || !strings.Contains(string(encoded), `"verbosity":"low"`) { t.Fatal(string(encoded)) }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"effort":"high"`) || !strings.Contains(string(encoded), `"verbosity":"low"`) {
+		t.Fatal(string(encoded))
+	}
 }
 
 func TestResponsesUsagePresence(t *testing.T) {
-	for _, test := range []struct{body string; input, output, total bool}{
-		{`{}`,false,false,false}, {`{"usage":null}`,false,false,false},
-		{`{"usage":{"input_tokens":0,"output_tokens":0,"total_tokens":0}}`,true,true,true},
-		{`{"usage":{"total_tokens":12}}`,false,false,true},
-		{`{"usage":{"total_tokens":-1}}`,false,false,false},
+	for _, test := range []struct {
+		body                 string
+		input, output, total bool
+	}{
+		{`{}`, false, false, false}, {`{"usage":null}`, false, false, false},
+		{`{"usage":{"input_tokens":0,"output_tokens":0,"total_tokens":0}}`, true, true, true},
+		{`{"usage":{"total_tokens":12}}`, false, false, true},
+		{`{"usage":{"total_tokens":-1}}`, false, false, false},
 	} {
 		var response responses.Response
-		if err := json.Unmarshal([]byte(test.body), &response); err != nil { t.Fatal(err) }
+		if err := json.Unmarshal([]byte(test.body), &response); err != nil {
+			t.Fatal(err)
+		}
 		recorder := &logRecorder{}
-		agent := &Agent{log:recorder}
+		agent := &Agent{log: recorder}
 		agent.logResponse(1, 0, &response, "")
 		round := recorder.rounds[0]
-		if (round.input != nil) != test.input || (round.output != nil) != test.output || (round.total != nil) != test.total { t.Fatalf("round=%+v", round) }
+		if (round.input != nil) != test.input || (round.output != nil) != test.output || (round.total != nil) != test.total {
+			t.Fatalf("round=%+v", round)
+		}
 	}
 }

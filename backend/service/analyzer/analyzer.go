@@ -123,4 +123,3 @@ func (analyzer *Service) TestConnection(ctx context.Context, settings []setting.
 		I18nMessage: "",
 	}, nil
 }
-

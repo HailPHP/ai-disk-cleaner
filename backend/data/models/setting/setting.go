@@ -76,4 +76,3 @@ func (store *SettingStore) SaveSettings(ctx context.Context, settings []Setting)
 	}
 	return nil
 }
-

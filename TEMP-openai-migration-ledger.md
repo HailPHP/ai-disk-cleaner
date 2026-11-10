@@ -8,9 +8,9 @@ Privacy: local item history, store=false, no previous_response_id or conversatio
 
 ## Approved feature stages
 
-1. Dual API analysis and connection testing: typed Responses calls, original tools, local complete output replay, call_id results, compaction, budgets, cancellation. Implementation underway; validation pending.
-2. Settings and diagnostics: API mode, 120-second configurable timeout, localized guidance, usage and safe errors, legacy settings migration. Implementation underway; validation pending.
-3. Windows delivery: repository CI, full tests, frontend lint/check/build, Windows amd64 executable and SHA-256. Pending.
+1. Dual API analysis and connection testing: typed Responses calls, original tools, local complete output replay, call_id results, compaction, budgets, cancellation. Implemented; frontend checks and the full Go suite passed in Windows CI run 42747492272.
+2. Settings and diagnostics: API mode, 120-second configurable timeout, localized guidance, usage and safe errors, legacy settings migration. Implemented; frontend checks and the full Go suite passed in Windows CI run 42747492272.
+3. Windows delivery: full tests and frontend lint/check/build passed in Windows CI run 42747492272; Windows amd64 executable build and the 8-second process-startup smoke check also passed in run 42747492272. The final clean-source CI run is pending after synchronizing formatter changes.
 
 ## Capability assessment
 
@@ -60,3 +60,7 @@ The existing environment credential successfully accessed gpt-6-astra. A two-req
 PR #1 has been created for CI validation. No GitHub Actions run was produced initially. The user has now confirmed enabling workflows in the fork; Windows CI run 42746719907 started successfully. The first run identifies formatting changes for synchronization; full tests/build remain pending. A Windows process-startup smoke check has also been added to validate that the generated executable stays running without starting a scan.
 
 Local static checks: 78 Go/TypeScript/TSX source files parsed without syntax errors using Tree-sitter; translation JSON and workflow YAML parsed successfully; git diff --check passed. These checks do not establish type checking, test success or executable build success.
+
+## Windows validation progress
+
+Run 42747492272 passed pnpm lint, pnpm check, pnpm build and go test ./... after bounding the cancellation test server wait. Windows executable compilation and the 8-second process-startup check passed. This run failed only the clean-source/format checks because formatters adjusted the authored source. Those exact formatter changes have now been synchronized. The final clean-source build will also place the executable and README together at the root of the download archive.

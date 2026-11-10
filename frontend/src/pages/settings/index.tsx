@@ -326,7 +326,10 @@ export default function SettingsPage() {
                   </Select.Trigger>
                   <Select.Popover>
                     <ListBox>
-                      <ListBox.Item id="chat_completions" textValue="Chat Completions">
+                      <ListBox.Item
+                        id="chat_completions"
+                        textValue="Chat Completions"
+                      >
                         Chat Completions
                       </ListBox.Item>
                       <ListBox.Item id="responses" textValue="Responses API">
@@ -405,13 +408,21 @@ export default function SettingsPage() {
               validate: (value) => {
                 const seconds = Number(value)
                 return (
-                  (Number.isSafeInteger(seconds) && seconds >= 1 && seconds <= 3600) ||
+                  (Number.isSafeInteger(seconds) &&
+                    seconds >= 1 &&
+                    seconds <= 3600) ||
                   t('settings.requestTimeout.invalid')
                 )
               },
             }}
           >
-            <Input disabled={isSaving} min={1} max={3600} step={1} type="number" />
+            <Input
+              disabled={isSaving}
+              min={1}
+              max={3600}
+              step={1}
+              type="number"
+            />
           </ControlledNextUIFormWrapper>
           <div className="col-span-2">
             <ControlledNextUIFormWrapper
@@ -543,4 +554,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
