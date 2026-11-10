@@ -31,3 +31,8 @@
 1. 使用 [gdu](https://github.com/dundee/gdu) 扫描指定位置，并将文件树加载到内存中
 2. 暴露读取文件树的工具，让 LLM 分析文件树，找出占用最大的文件。在找到垃圾文件后 LLM 会调用 [add_trash_file](backend/service/analyzer/tools.go) 工具来标记文件
 3. 系统汇总 LLM 分析结果，展示给用户 
+
+
+## 双 API 模式与 Windows 构建
+
+[Responses API / Chat Completions configuration and Windows executable](docs/responses-api.md)

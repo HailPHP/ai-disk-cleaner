@@ -24,11 +24,11 @@ type TestConnectionResult struct {
 	I18nMessage string `json:"i18nMessage"`
 }
 
-func (err *analysisError) Error() string      { return err.cause.Error() }
+func (err *analysisError) Error() string      { return err.summary }
 func (err *analysisError) Unwrap() error      { return err.cause }
 func (err *analysisError) LogSummary() string { return err.summary }
 func (err *invalidResponseError) Error() string {
-	return fmt.Sprintf("invalid LLM response: status=%d content-type=%s body=%s", err.status, err.contentType, err.body)
+	return fmt.Sprintf("invalid LLM response: status=%d", err.status)
 }
 
 // NewService creates the analyzer service for the central service manager.
@@ -77,6 +77,9 @@ func (analyzer *Service) TestConnection(ctx context.Context, settings []setting.
 	if err != nil {
 		return TestConnectionResult{}, err
 	}
+	if config.apiMode == apiModeResponses {
+		return testResponsesConnection(ctx, config)
+	}
 
 	params := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{
@@ -98,7 +101,10 @@ func (analyzer *Service) TestConnection(ctx context.Context, settings []setting.
 	client := newOpenAIClient(config)
 	completion, err := client.Chat.Completions.New(ctx, params)
 	if err != nil {
-		return TestConnectionResult{}, fmt.Errorf("test LLM connection: %w", err)
+		return TestConnectionResult{}, &analysisError{cause: err, summary: completionErrorSummary(err)}
+	}
+	if len(completion.Choices) == 0 {
+		return TestConnectionResult{}, errors.New("LLM 未返回 choices")
 	}
 	message := make(map[string]any, 0)
 	err = json.Unmarshal([]byte(completion.Choices[0].Message.RawJSON()), &message)

@@ -32,3 +32,8 @@ The entire architecture are three steps:
 1. Use [gdu](https://github.com/dundee/gdu) to scan the specific location and load the file tree into memory.
 2. Expose a file tree reading tool to the LLM and let it find the trash file. When the trash file is found, the LLM invokes the [add_trash_file](backend/service/analyzer/tools.go) tool to mark the file.
 3. Combine the LLM analysis results and display them to the user.
+
+
+## Dual API modes and Windows builds
+
+[Responses API / Chat Completions configuration and Windows executable](docs/responses-api.md)

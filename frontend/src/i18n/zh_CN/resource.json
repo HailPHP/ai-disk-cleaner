@@ -187,6 +187,17 @@
       "help": "首次启动时将使用系统语言，手动选择后会记住您的设置。",
       "zh_CN": "简体中文",
       "en": "English"
+    },
+    "apiMode": {
+      "label": "LLM API 模式",
+      "description": "默认 Chat Completions 兼容现有模型；GPT-6 Astra 等模型可切换到 Responses API。切换模式后请检查 Extra Body。",
+      "baseURL": "只填写 Base URL，例如 https://api.openai.com/v1，不要添加 /responses 或 /chat/completions。",
+      "extraBody": "Responses 使用 reasoning.effort 和 text.verbosity。Astra 默认 low / medium；固定关闭服务端存储、流式和并行工具调用。"
+    },
+    "requestTimeout": {
+      "label": "请求超时（秒）",
+      "description": "默认 120 秒；高推理强度时可调整为 300 秒。SDK 自动重试可能增加总等待时间。",
+      "invalid": "请输入 1 到 3600 之间的整数。"
     }
   },
   "route": {

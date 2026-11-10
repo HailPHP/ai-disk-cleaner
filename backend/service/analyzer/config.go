@@ -22,6 +22,8 @@ type settingStore interface {
 }
 
 type llmConfig struct {
+	apiMode                    string
+	requestTimeout             time.Duration
 	secret                     string
 	baseURL                    string
 	model                      string
@@ -29,6 +31,11 @@ type llmConfig struct {
 	autoContextCompressEnabled bool
 	extraBody                  map[string]any
 }
+
+const (
+	apiModeChatCompletions = "chat_completions"
+	apiModeResponses       = "responses"
+)
 
 func (analyzer *Service) loadLLMConfig(ctx context.Context) (*llmConfig, error) {
 	if analyzer.settings == nil {
@@ -49,9 +56,24 @@ func parseLLMConfig(settings []setting.Setting) (*llmConfig, error) {
 	}
 
 	config := llmConfig{
-		secret:  strings.TrimSpace(values["llm.secret"]),
-		baseURL: strings.TrimSpace(values["llm.url"]),
-		model:   strings.TrimSpace(values["llm.model"]),
+		apiMode:        strings.TrimSpace(values["llm.api-mode"]),
+		requestTimeout: 120 * time.Second,
+		secret:         strings.TrimSpace(values["llm.secret"]),
+		baseURL:        strings.TrimSpace(values["llm.url"]),
+		model:          strings.TrimSpace(values["llm.model"]),
+	}
+	if config.apiMode == "" {
+		config.apiMode = apiModeChatCompletions
+	}
+	if config.apiMode != apiModeChatCompletions && config.apiMode != apiModeResponses {
+		return nil, errors.New("load LLM configuration: llm.api-mode must be chat_completions or responses")
+	}
+	if timeout := strings.TrimSpace(values["llm.request-timeout"]); timeout != "" {
+		seconds, err := strconv.ParseInt(timeout, 10, 64)
+		if err != nil || seconds < 1 || seconds > 3600 {
+			return nil, errors.New("load LLM configuration: llm.request-timeout must be between 1 and 3600 seconds")
+		}
+		config.requestTimeout = time.Duration(seconds) * time.Second
 	}
 	if config.secret == "" {
 		return nil, errors.New("load LLM configuration: llm.secret is empty")
@@ -79,6 +101,11 @@ func parseLLMConfig(settings []setting.Setting) (*llmConfig, error) {
 			return nil, errors.New("load LLM configuration: llm.extra-body must be a JSON object")
 		}
 	}
+	if config.apiMode == apiModeResponses {
+		if err := validateResponsesExtraBody(config.extraBody); err != nil {
+			return nil, err
+		}
+	}
 	return &config, nil
 }
 
@@ -87,18 +114,9 @@ type debugTransport struct {
 }
 
 type invalidResponseError struct {
-	status      int
-	contentType string
-	body        string
+	status int
 }
 
-func truncate(s string, max int) string {
-	runes := []rune(s)
-	if len(runes) <= max {
-		return s
-	}
-	return string(runes[:max]) + "..."
-}
 func (t debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.rt.RoundTrip(req)
 	if err != nil {
@@ -110,15 +128,20 @@ func (t debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if resp.StatusCode >= 400 ||
 		!strings.Contains(contentType, "application/json") {
 
-		body, _ := io.ReadAll(resp.Body)
+		// Do not retain or expose upstream bodies: gateways can echo credentials.
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
 		_ = resp.Body.Close()
 
-		return nil, &invalidResponseError{status: resp.StatusCode, contentType: contentType, body: truncate(string(body), 1024)}
+		return nil, &invalidResponseError{status: resp.StatusCode}
 	}
 
 	return resp, nil
 }
 func newOpenAIClient(config *llmConfig) openai.Client {
+	timeout := config.requestTimeout
+	if timeout <= 0 {
+		timeout = 120 * time.Second
+	}
 	client := &http.Client{
 		Transport: debugTransport{
 			rt: http.DefaultTransport,
@@ -127,7 +150,7 @@ func newOpenAIClient(config *llmConfig) openai.Client {
 	return openai.NewClient(
 		option.WithAPIKey(config.secret),
 		option.WithBaseURL(config.baseURL),
-		option.WithRequestTimeout(time.Duration(120)*time.Second),
+		option.WithRequestTimeout(timeout),
 		//option.WithDebugLog(log.New(
 		//	os.Stdout,
 		//	"[openai] ",

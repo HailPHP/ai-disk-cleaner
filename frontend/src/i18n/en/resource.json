@@ -170,7 +170,6 @@
       "thinkingModeEnabled": "You have enabled Thinking Mode. We recommend turning it off, as it will significantly slow down the analysis process and may even cause timeouts!"
     },
     "maxTokenInOneConversation": "Max token in conversation, it is recommended to use between 500,000 and 1,000,000.",
-
     "autoContextCompress": {
       "label": "Smart Context Compression(BETA)",
       "warning": "Enabling this feature will automatically compress the context once it reaches a certain size. It's generally not recommended to enable this feature; it should only be done when the token budget is limited or the context becomes full due to the model itself."
@@ -188,6 +187,17 @@
       "help": "The system language is used on first launch. Your manual selection will be remembered.",
       "zh_CN": "简体中文",
       "en": "English"
+    },
+    "apiMode": {
+      "label": "LLM API Mode",
+      "description": "Chat Completions preserves existing model compatibility. Select Responses API for models such as GPT-6 Astra. Review Extra Body after switching modes.",
+      "baseURL": "Enter only the Base URL, e.g. https://api.openai.com/v1, without /responses or /chat/completions.",
+      "extraBody": "Responses uses reasoning.effort and text.verbosity. Astra defaults to low / medium. Storage, streaming and parallel tool calls are disabled."
+    },
+    "requestTimeout": {
+      "label": "Request timeout (seconds)",
+      "description": "Defaults to 120 seconds. Try 300 seconds for higher reasoning effort. SDK retries may increase total wait time.",
+      "invalid": "Enter an integer between 1 and 3600."
     }
   },
   "route": {

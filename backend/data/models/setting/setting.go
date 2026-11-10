@@ -28,6 +28,8 @@ func (Setting) TableName() string {
 }
 
 var defaultSettings = []Setting{
+	{Key: "llm.api-mode", Value: "chat_completions"},
+	{Key: "llm.request-timeout", Value: "120"},
 	{Key: "llm.secret", Value: ""},
 	{Key: "llm.url", Value: ""},
 	{Key: "llm.model", Value: ""},

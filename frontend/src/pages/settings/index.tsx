@@ -38,6 +38,8 @@ import i18n, {
 
 type SettingValues = {
   language: SupportedLanguage
+  llmAPIMode: string
+  llmRequestTimeout: string
   llmSecret: string
   llmURL: string
   llmModel: string
@@ -49,6 +51,8 @@ type SettingValues = {
 
 const initialValues: SettingValues = {
   language: i18n.resolvedLanguage as SupportedLanguage,
+  llmAPIMode: 'chat_completions',
+  llmRequestTimeout: '120',
   llmSecret: '',
   llmURL: '',
   llmModel: '',
@@ -70,6 +74,8 @@ function valuesFromSettings(
   )
   return {
     language,
+    llmAPIMode: values.get('llm.api-mode') ?? 'chat_completions',
+    llmRequestTimeout: values.get('llm.request-timeout') ?? '120',
     llmSecret: values.get('llm.secret') ?? '',
     llmURL: values.get('llm.url') ?? '',
     llmModel: values.get('llm.model') ?? '',
@@ -82,6 +88,8 @@ function valuesFromSettings(
 
 function settingsFromValues(values: SettingValues): setting.Setting[] {
   return [
+    { key: 'llm.api-mode', value: values.llmAPIMode },
+    { key: 'llm.request-timeout', value: values.llmRequestTimeout.trim() },
     { key: 'llm.secret', value: values.llmSecret },
     { key: 'llm.url', value: values.llmURL.trim() },
     { key: 'llm.model', value: values.llmModel.trim() },
@@ -100,9 +108,10 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [loadError, setLoadError] = useState('')
-  const { control, getValues, reset, trigger } = useForm<SettingValues>({
+  const { control, getValues, reset, trigger, watch } = useForm<SettingValues>({
     defaultValues: initialValues,
   })
+  const apiMode = watch('llmAPIMode')
 
   const load = useCallback(async () => {
     if (!hasWailsRuntime()) {
@@ -154,6 +163,8 @@ export default function SettingsPage() {
   const testConnection = async () => {
     if (
       !(await trigger([
+        'llmAPIMode',
+        'llmRequestTimeout',
         'llmSecret',
         'llmURL',
         'llmModel',
@@ -297,6 +308,42 @@ export default function SettingsPage() {
           <div className="col-span-2">
             <ControlledNextUIFormWrapper
               control={control}
+              description={t('settings.apiMode.description')}
+              label={t('settings.apiMode.label')}
+              name="llmAPIMode"
+              rules={{ required: true }}
+            >
+              {(field) => (
+                <Select
+                  isDisabled={isSaving}
+                  selectedKey={field.value}
+                  variant="secondary"
+                  onSelectionChange={(key) => field.onChange(String(key))}
+                >
+                  <Select.Trigger className="rounded-xl">
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item
+                        id="chat_completions"
+                        textValue="Chat Completions"
+                      >
+                        Chat Completions
+                      </ListBox.Item>
+                      <ListBox.Item id="responses" textValue="Responses API">
+                        Responses API
+                      </ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              )}
+            </ControlledNextUIFormWrapper>
+          </div>
+          <div className="col-span-2">
+            <ControlledNextUIFormWrapper
+              control={control}
               description="LLM Secret"
               label="LLM Secret"
               rules={{ required: true }}
@@ -308,7 +355,7 @@ export default function SettingsPage() {
           <div className="col-span-2">
             <ControlledNextUIFormWrapper
               control={control}
-              description="Model API Url"
+              description={t('settings.apiMode.baseURL')}
               label="LLM URL"
               rules={{ required: true }}
               name="llmURL"
@@ -352,6 +399,31 @@ export default function SettingsPage() {
               type="number"
             />
           </ControlledNextUIFormWrapper>
+          <ControlledNextUIFormWrapper
+            control={control}
+            description={t('settings.requestTimeout.description')}
+            label={t('settings.requestTimeout.label')}
+            name="llmRequestTimeout"
+            rules={{
+              validate: (value) => {
+                const seconds = Number(value)
+                return (
+                  (Number.isSafeInteger(seconds) &&
+                    seconds >= 1 &&
+                    seconds <= 3600) ||
+                  t('settings.requestTimeout.invalid')
+                )
+              },
+            }}
+          >
+            <Input
+              disabled={isSaving}
+              min={1}
+              max={3600}
+              step={1}
+              type="number"
+            />
+          </ControlledNextUIFormWrapper>
           <div className="col-span-2">
             <ControlledNextUIFormWrapper
               control={control}
@@ -383,7 +455,11 @@ export default function SettingsPage() {
           <div className="col-span-2">
             <ControlledNextUIFormWrapper
               control={control}
-              description={t('settings.llmExtraBody.description')}
+              description={t(
+                apiMode === 'responses'
+                  ? 'settings.apiMode.extraBody'
+                  : 'settings.llmExtraBody.description',
+              )}
               label={t('settings.llmExtraBody.label')}
               name="llmExtraBody"
               rules={{
@@ -407,7 +483,11 @@ export default function SettingsPage() {
             >
               <TextArea
                 disabled={isSaving}
-                placeholder='{"thinking": {"type": "disabled"}}'
+                placeholder={
+                  apiMode === 'responses'
+                    ? '{"reasoning":{"effort":"low"},"text":{"verbosity":"medium"},"tool_choice":"auto","parallel_tool_calls":false}'
+                    : '{"thinking": {"type": "disabled"}}'
+                }
               />
             </ControlledNextUIFormWrapper>
           </div>

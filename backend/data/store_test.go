@@ -265,11 +265,13 @@ func TestSettingDefaultsAndSave(t *testing.T) {
 	for _, item := range settings {
 		got[item.Key] = item.Value
 	}
-	if len(got) != 7 || got["llm.max-token"] != "620000" || got["llm.auto-context-compress"] != "false" || got["llm.extra-body"] != "" || got["record.max.count"] != "10" {
+	if len(got) != 9 || got["llm.api-mode"] != "chat_completions" || got["llm.request-timeout"] != "120" || got["llm.max-token"] != "620000" || got["llm.auto-context-compress"] != "false" || got["llm.extra-body"] != "" || got["record.max.count"] != "10" {
 		t.Fatalf("default settings = %#v", got)
 	}
 
 	updated := []setting.Setting{
+		{Key: "llm.api-mode", Value: "responses"},
+		{Key: "llm.request-timeout", Value: "300"},
 		{Key: "llm.secret", Value: "secret"},
 		{Key: "llm.url", Value: "https://example.com/v1"},
 		{Key: "llm.model", Value: "model"},
@@ -297,7 +299,7 @@ func TestSettingDefaultsAndSave(t *testing.T) {
 	for _, item := range settings {
 		got[item.Key] = item.Value
 	}
-	if len(got) != 7 {
+	if len(got) != 9 {
 		t.Fatalf("settings after removing llm.key = %#v", got)
 	}
 	for _, want := range updated {
