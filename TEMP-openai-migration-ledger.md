@@ -52,3 +52,11 @@ Privacy: local item history, store=false, no previous_response_id or conversatio
 - Mock coverage planned: endpoint/body, old defaults and settings persistence, both connection probes, strict tool schema parity, multi-turn dispatch, call IDs, encrypted reasoning/phase replay, successful/failed/mixed compaction, token usage, budget stop, cancellation, incomplete/refusal/empty responses, duplicate IDs and safe HTTP errors.
 - Local environment cannot download Go/npm dependencies: proxy returns HTTP 403 for github.com, proxy.golang.org and registry.npmjs.org. Source retrieved using the authorized GitHub connector; Windows CI will execute builds and tests.
 - Validation and delivery results will be recorded after execution, not inferred from code review.
+
+## Live protocol check (2026-11-10)
+
+The existing environment credential successfully accessed gpt-6-astra. A two-request synthetic Responses check forced analyze_directory, replayed all output items, supplied the matching call_id result, and received a completed text response. Usage: 193 + 222 = 415 tokens. No disk data was sent. This trivial prompt produced no reasoning item, so encrypted reasoning replay is covered by the mock test rather than claimed as live-verified. This Python protocol check does not substitute for compiling/testing the Go app.
+
+PR #1 has been created for CI validation. No GitHub Actions run was produced initially; user has been asked to enable workflows in the fork. Windows executable and full suite remain pending.
+
+Local static checks: 78 Go/TypeScript/TSX source files parsed without syntax errors using Tree-sitter; translation JSON and workflow YAML parsed successfully; git diff --check passed. These checks do not establish type checking, test success or executable build success.
