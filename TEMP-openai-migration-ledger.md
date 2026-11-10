@@ -10,7 +10,7 @@ Privacy: local item history, store=false, no previous_response_id or conversatio
 
 1. Dual API analysis and connection testing: typed Responses calls, original tools, local complete output replay, call_id results, compaction, budgets, cancellation. Implemented; frontend checks and the full Go suite passed in Windows CI run 42747492272.
 2. Settings and diagnostics: API mode, 120-second configurable timeout, localized guidance, usage and safe errors, legacy settings migration. Implemented; frontend checks and the full Go suite passed in Windows CI run 42747492272.
-3. Windows delivery: full tests and frontend lint/check/build passed in Windows CI run 42747492272; Windows amd64 executable build and the 8-second process-startup smoke check also passed in run 42747492272. The final clean-source CI run is pending after synchronizing formatter changes.
+3. Windows delivery: full tests and frontend lint/check/build passed in Windows CI run 42747492272; Windows amd64 executable build and the 8-second process-startup smoke check also passed in run 42747492272. Final clean-source CI run 42748360161 passed all jobs and steps on cfd48bda543e1e33cf24e5bd013371b77d184e51.
 
 ## Capability assessment
 
@@ -63,4 +63,20 @@ Local static checks: 78 Go/TypeScript/TSX source files parsed without syntax err
 
 ## Windows validation progress
 
-Run 42747492272 passed pnpm lint, pnpm check, pnpm build and go test ./... after bounding the cancellation test server wait. Windows executable compilation and the 8-second process-startup check passed. This run failed only the clean-source/format checks because formatters adjusted the authored source. Those exact formatter changes have now been synchronized. The final clean-source build will also place the executable and README together at the root of the download archive.
+Run 42747492272 passed pnpm lint, pnpm check, pnpm build and go test ./... after bounding the cancellation test server wait. Windows executable compilation and the 8-second process-startup check passed. This run failed only the clean-source/format checks because formatters adjusted the authored source. Those exact formatter changes have now been synchronized. The final clean-source build places the executable and README together at the root of the download archive.
+
+## Final outcome
+
+All approved feature stages are implemented. GitHub Actions run [42748360161](https://github.com/HailPHP/ai-disk-cleaner/actions/runs/42748360161) completed successfully on source commit `cfd48bda543e1e33cf24e5bd013371b77d184e51`:
+
+- Go formatting check and clean-source check passed.
+- `pnpm lint`, `pnpm check`, `pnpm build` passed.
+- `go test ./...` passed, including analyzer protocol, cancellation, compaction and settings migration coverage.
+- Wails Windows amd64 build passed; the executable remained running through the 8-second startup smoke check without initiating disk scanning or cleanup.
+- The original credential-dependent full fixture analysis remains skipped in CI without its LLM environment variables. The separate live Astra protocol check is documented above; it does not establish full desktop end-to-end API coverage.
+- Artifact [13732323299](https://github.com/HailPHP/ai-disk-cleaner/actions/runs/42748360161/artifacts/13732323299) contains the executable, SHA-256 file, startup result and configuration README at archive root.
+- Downloaded artifact independently verified: Windows PE AMD64, GUI subsystem, executable size 33,903,104 bytes.
+- Executable SHA-256: `089162147f25e7a8ccdc52754573ffb482207473665acb62f6b928bb08088660`.
+- Archive SHA-256: `143e98edd7a91812dfb9e90e67c360754aa803e121e50436c141d5e6d1d73a96`.
+
+This final ledger update changes documentation only; executable source and build configuration remain exactly as tested above. No additional product changes or feature stages are pending. Manual interactive Windows UI testing was not performed; startup liveness, compilation, automated tests and the bounded live protocol check are the verified coverage.
